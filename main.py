@@ -45,7 +45,7 @@ current_level = 1
 
 GAME_RULES = [
     "Welcome to Asteroids!",
-    "Use arrow keys to move and space to shoot.",
+    "Use A AND D keys to move and space to shoot.",
     "Avoid enemies and shoot them to score points.",
     "Score thresholds to advance to the next level:",
     "Level 1: 10 points",
@@ -62,25 +62,29 @@ while not GAME.EXIT:
     clock.tick(60)
 
     for event in pygame.event.get():
-        t = random.randint(0, 1000)
         if event.type == CONSTANTS.QUIT:
             GAME.EXIT = True
         elif event.type == create_enemy_event:
-            if current_level == 2 or current_level == 3:
-                e = MidEnemy(t, 100)
-            elif current_level == 4:
-                e = BigEnemy(t, 100)
-            elif current_level == 5:
-                if len(GAME.BOSS_ENEMY_GROUP) < 3:
-                    e = BossEnemy(t, 100)
+            if GAME.STATE == "Running":
+                t = random.randint(0, 1000)
+                if current_level == 2 or current_level == 3:
+                    e = MidEnemy(t, 100)
+                    GAME.MID_ENEMY_GROUP.add(e)
+                elif current_level == 4:
+                    e = BigEnemy(t, 100)
+                    GAME.BIG_ENEMY_GROUP.add(e)
+                elif current_level == 5:
+                    if len(GAME.BOSS_ENEMY_GROUP) < 3:
+                        e = BossEnemy(t, 100)
+                        GAME.BOSS_ENEMY_GROUP.add(e)
+                    else:
+                        e = None
                 else:
-                    e = None
-            else:
-                e = Enemy(t, 100)
+                    e = Enemy(t, 100)
+                    GAME.ENEMY_GROUP.add(e)
 
-            if e:
-                GAME.ENEMY_GROUP.add(e)
-                pygame.time.set_timer(create_enemy_event, e.spawn_time)
+                if e:
+                    pygame.time.set_timer(create_enemy_event, e.spawn_time)
 
     pressed = pygame.key.get_pressed()
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
@@ -103,12 +107,6 @@ while not GAME.EXIT:
         text = FONT.render("Press SPACE to Start Level " + str(current_level), True, (255, 0, 0))
         GAME.SCREEN.blit(text, (280, 320))
 
-        x = mouse_pos.x
-        y = mouse_pos.y
-        position_text = "X: " + str(x) + " Y: " + str(y)
-        text = FONT2.render(position_text, True, (255, 255, 255))
-        GAME.SCREEN.blit(text, (10, 10))
-
         if pressed[pygame.K_SPACE] == 1:
             GAME.STATE = "Running"
             GAME.MUSIC = pygame.mixer.Sound("sounds/sunsetreverie.mp3")
@@ -126,9 +124,14 @@ while not GAME.EXIT:
         GAME.PLAYER.update(pressed, mouse_pos, mouse_buttons)
         GAME.ENEMY_GROUP.update()
         GAME.BULLET_GROUP.update()
+        GAME.MID_ENEMY_GROUP.update()
+        GAME.BIG_ENEMY_GROUP.update()
+        GAME.BOSS_ENEMY_GROUP.update()
 
-        if pygame.sprite.groupcollide(GAME.ENEMY_GROUP, GAME.BULLET_GROUP, True, True):
-            GAME.SCORE += 1
+        for enemy_group in [GAME.ENEMY_GROUP, GAME.MID_ENEMY_GROUP, GAME.BIG_ENEMY_GROUP, GAME.BOSS_ENEMY_GROUP]:
+            for enemy in enemy_group:
+                if pygame.sprite.spritecollide(enemy, GAME.BULLET_GROUP, True):
+                    GAME.SCORE += enemy.hit()
 
         if pygame.sprite.spritecollide(GAME.PLAYER, GAME.ENEMY_GROUP, True):
             GAME.STATE = "Game Over"
@@ -136,6 +139,9 @@ while not GAME.EXIT:
         GAME.PLAYER.draw(GAME.SCREEN)
         GAME.ENEMY_GROUP.draw(GAME.SCREEN)
         GAME.BULLET_GROUP.draw(GAME.SCREEN)
+        GAME.MID_ENEMY_GROUP.draw(GAME.SCREEN)
+        GAME.BIG_ENEMY_GROUP.draw(GAME.SCREEN)
+        GAME.BOSS_ENEMY_GROUP.draw(GAME.SCREEN)
 
         if GAME.SCORE >= LEVEL_SCORES[current_level]:
             if current_level < 5:
@@ -143,8 +149,12 @@ while not GAME.EXIT:
                 GAME.STATE = "Start Game Level " + str(current_level)
                 GAME.ENEMY_GROUP.empty()
                 GAME.BULLET_GROUP.empty()
+                GAME.MID_ENEMY_GROUP.empty()
+                GAME.BIG_ENEMY_GROUP.empty()
+                GAME.BOSS_ENEMY_GROUP.empty()
                 GAME.PLAYER.kill()
                 GAME.MUSIC.stop()
+                pygame.time.set_timer(create_enemy_event, 0)  # Stop enemy spawning timer
             else:
                 if len(GAME.BOSS_ENEMY_GROUP) == 0:
                     boss_enemy = BossEnemy(512, 100)
@@ -153,8 +163,12 @@ while not GAME.EXIT:
     elif GAME.STATE == "Game Over":
         GAME.ENEMY_GROUP.empty()
         GAME.BULLET_GROUP.empty()
+        GAME.MID_ENEMY_GROUP.empty()
+        GAME.BIG_ENEMY_GROUP.empty()
+        GAME.BOSS_ENEMY_GROUP.empty()
         GAME.PLAYER.kill()
         GAME.MUSIC.stop()
+        pygame.time.set_timer(create_enemy_event, 0)  # Stop enemy spawning timer
 
         text = FONT.render("Game Over", True, (255, 0, 0))
         GAME.SCREEN.blit(text, (280, 320))
@@ -168,4 +182,3 @@ while not GAME.EXIT:
 print("Exiting")
 pygame.quit()
 sys.exit(0)
-
