@@ -1,12 +1,12 @@
 import pygame
 import game_globals as GAME
 
-class MidEnemy(pygame.sprite.Sprite):
+class BigEnemy(pygame.sprite.Sprite):
  
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.image.load("images/baddietank.png")
-        self.image = pygame.transform.scale(self.image, (100, 100))
+        self.image = pygame.transform.scale(self.image, (150, 150))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
 
