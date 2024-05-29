@@ -1,6 +1,6 @@
 import pygame
 import game_globals as GAME
-
+#UFJDBSAIGUFB
 class BossEnemy(pygame.sprite.Sprite):
  
     def __init__(self, x, y):
@@ -10,7 +10,7 @@ class BossEnemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.health = 5
-
+        
         self.base_speed = 1
         self.base_spawn_time = 1500
         self.direction = 1
